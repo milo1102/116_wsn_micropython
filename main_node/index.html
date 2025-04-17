@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Sensores DHT22</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-title {
+            color: #3498db;
+            margin-top: 0;
+        }
+        #lastUpdate {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Monitor de Sensores DHT22</h1>
+    
+    <div class="chart-container">
+        <h2 class="chart-title">Temperatura (°C)</h2>
+        <canvas id="tempChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <h2 class="chart-title">Humedad (%)</h2>
+        <canvas id="humChart"></canvas>
+    </div>
+
+    <p id="lastUpdate">Última actualización: --</p>
+
+    <script>
+        // Configuración del gráfico de temperatura
+        const tempChart = new Chart(
+            document.getElementById('tempChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: [], // Nombres de nodos (A, B, C)
+                    datasets: [{
+                        label: 'Temperatura',
+                        data: [],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: -10,  // Mínimo para DHT22
+                            max: 50,    // Máximo típico ambiente
+                            title: {
+                                display: true,
+                                text: '°C'
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Configuración del gráfico de humedad
+        const humChart = new Chart(
+            document.getElementById('humChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: [], // Nombres de nodos (A, B, C)
+                    datasets: [{
+                        label: 'Humedad',
+                        data: [],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: '%'
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Función para actualizar los gráficos
+        async function updateCharts() {
+            try {
+                const response = await fetch('/data');
+                if (!response.ok) throw new Error("Error en la respuesta");
+                
+                const data = await response.json();
+                const nodeNames = Object.keys(data);
+                const now = new Date();
+                
+                // Actualizar temperatura
+                tempChart.data.labels = nodeNames;
+                tempChart.data.datasets[0].data = nodeNames.map(node => {
+                    return data[node].temp.length > 0 ? data[node].temp.slice(-1)[0] : null;
+                });
+                
+                // Actualizar humedad
+                humChart.data.labels = nodeNames;
+                humChart.data.datasets[0].data = nodeNames.map(node => {
+                    return data[node].hum.length > 0 ? data[node].hum.slice(-1)[0] : null;
+                });
+                
+                tempChart.update();
+                humChart.update();
+                
+                // Actualizar marca de tiempo
+                document.getElementById('lastUpdate').textContent = 
+                    `Última actualización: ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                console.error("Error al actualizar:", error);
+                document.getElementById('lastUpdate').textContent = 
+                    "Error al cargar datos. Intentando nuevamente...";
+            }
+        }
+
+        // Actualizar cada 3 segundos
+        setInterval(updateCharts, 3000);
+        updateCharts(); // Cargar datos inmediatamente
+    </script>
+</body>
+</html>

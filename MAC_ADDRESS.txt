@@ -1,0 +1,14 @@
+---MAC ADDRESS NODO PRINCIPAL---
+
+MPY: soft reboot
+MAC Address: c4:d8:d5:95:b4:6c
+
+---MAC ADDRESS SUB NODO A----
+
+MPY: soft reboot
+MAC Address: c0:49:ef:9c:d7:dc
+
+---MAC ADDRESS SUB NODO B----
+
+MPY: soft reboot
+MAC Address: cc:db:a7:32:b7:40
